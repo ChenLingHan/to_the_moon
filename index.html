@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To the Moon - 记忆碎片配对游戏</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1f2d 0%, #0c0e16 100%);
+            color: #e8e6e3;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin: 20px 0 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            color: #ff7bac;
+            text-shadow: 0 0 15px rgba(255, 123, 172, 0.5);
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.4rem;
+            color: #a9d1ff;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .stats {
+            background: rgba(24, 28, 42, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            width: 280px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats h2 {
+            text-align: center;
+            color: #ffb74d;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: #a9d1ff;
+        }
+        
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff7bac;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            perspective: 1000px;
+            max-width: 600px;
+        }
+        
+        .memory-card {
+            width: 130px;
+            height: 160px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .memory-card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .memory-card.matched {
+            transform: rotateY(180deg);
+            box-shadow: 0 0 15px rgba(102, 255, 204, 0.8);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .card-back {
+            background: linear-gradient(135deg, #ff7bac 0%, #a9d1ff 100%);
+            transform: rotateY(180deg);
+            padding: 15px;
+        }
+        
+        .card-back i {
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .card-back h3 {
+            font-size: 1.1rem;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .card-front i {
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .story-section {
+            background: rgba(24, 28, 42, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            width: 280px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .story-section h2 {
+            text-align: center;
+            color: #66ffcc;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .story-content {
+            height: 320px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #e8e6e3;
+            scrollbar-width: thin;
+            scrollbar-color: #ff7bac rgba(0, 0, 0, 0.3);
+        }
+        
+        .story-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .story-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        .story-content::-webkit-scrollbar-thumb {
+            background: #ff7bac;
+            border-radius: 4px;
+        }
+        
+        .story-content p {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #ff7bac 0%, #a9d1ff 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 14px 35px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .completion-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+        
+        .completion-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .completion-message h2 {
+            font-size: 4rem;
+            color: #66ffcc;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(102, 255, 204, 0.7);
+        }
+        
+        .completion-message p {
+            font-size: 1.5rem;
+            max-width: 700px;
+            text-align: center;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            color: #a9d1ff;
+        }
+        
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle linear infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        @media (max-width: 900px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stats, .story-section {
+                width: 100%;
+                max-width: 600px;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(4, 1fr);
+                max-width: 100%;
+            }
+            
+            .memory-card {
+                width: 20vw;
+                height: 25vw;
+                max-width: 130px;
+                max-height: 160px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>To the Moon</h1>
+        <p class="subtitle">记忆碎片配对游戏</p>
+    </div>
+    
+    <div class="game-container">
+        <div class="stats">
+            <h2>游戏信息</h2>
+            <div class="stat-item">
+                <span class="stat-label">进度:</span>
+                <span class="stat-value" id="matched-pairs">0 / 8</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">次数:</span>
+                <span class="stat-value" id="attempts">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">状态:</span>
+                <span class="stat-value" id="status">小朋友殿下游玩中</span>
+            </div>
+            <div class="controls">
+                <button id="reset-btn">重置游戏</button>
+            </div>
+        </div>
+        
+        <div class="game-board" id="game-board">
+            <!-- 卡片将由JavaScript动态生成 -->
+        </div>
+        
+        <div class="story-section">
+            <h2>碎片故事</h2>
+            <div class="story-content" id="story-content">
+                <p>匹配记忆碎片以解锁故事...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="completion-message" id="completion-message">
+        <h2>记忆完整!</h2>
+        <p>"我们总会在月球上相遇的，傻瓜！"</p>
+        <button id="replay-btn">再次游玩</button>
+        <div class="stars" id="stars"></div>
+    </div>
+    
+    <script>
+        // 游戏数据：记忆碎片及其对应的故事
+        const memoryData = [
+            {
+                id: 'paper-rabbit',
+                name: '纸兔子',
+                icon: 'fas fa-frog',
+                story: 'River用折纸制作的小兔子，是她与Johnny之间爱的象征。每当River折一个新的纸兔子，她都会问Johnny："这是什么？" 这是他们之间特殊的仪式。'
+            },
+            {
+                id: 'lighthouse',
+                name: '灯塔',
+                icon: 'fas fa-traffic-light',
+                story: 'River一直想去灯塔。在她生命的最后时刻，Johnny终于明白，这是因为在他们初次相遇的嘉年华上，River看到灯塔时说："如果我们都迷路了，就在月亮上相见吧。"'
+            },
+            {
+                id: 'platypus',
+                name: '鸭嘴兽玩偶',
+                icon: 'fas fa-otter',
+                story: '鸭嘴兽玩偶是River最珍视的玩具。Johnny在嘉年华的射击游戏中为她赢得了这个奖品。River喜欢它，因为它"与众不同"，就像她自己一样。'
+            },
+            {
+                id: 'umbrella',
+                name: '雨伞',
+                icon: 'fas fa-umbrella-beach',
+                story: '在Johnny的哥哥Joey去世的那天，River在雨中为Johnny撑起了一把伞。这个简单的举动让Johnny感受到了温暖，也是他们关系的开始。'
+            },
+            {
+                id: 'piano',
+                name: '钢琴',
+                icon: 'fas fa-music',
+                story: 'Johnny曾梦想成为钢琴家，但为了照顾患有阿斯伯格综合症的River，他放弃了自己的音乐事业。River一直保存着他创作的乐谱"For River"。'
+            },
+            {
+                id: 'medicine',
+                name: '药瓶',
+                icon: 'fas fa-pills',
+                story: 'River需要定期服用药物来控制她的症状。Johnny始终耐心照顾她，即使River有时会忘记吃药，他也从不抱怨，只是温柔地提醒。'
+            },
+            {
+                id: 'book',
+                name: '童话书',
+                icon: 'fas fa-book',
+                story: 'River最喜欢的童话是《彼得潘》。她常常读给Johnny听，特别是关于"Neverland"的部分。这成为他们共同的逃避现实的小天地。'
+            },
+            {
+                id: 'moon',
+                name: '月亮',
+                icon: 'fas fa-moon',
+                story: '月亮是他们约定的地方。River去世后，Johnny通过记忆修改技术实现了他们共同的梦想——一起去月球。在修改后的记忆中，他们最终在月球上团聚。'
+            }
+        ];
+        
+        // 游戏状态
+        let gameState = {
+            flippedCards: [],
+            matchedPairs: new Set(),
+            attempts: 0,
+            canFlip: true
+        };
+        
+        // DOM 元素
+        const gameBoard = document.getElementById('game-board');
+        const storyContent = document.getElementById('story-content');
+        const matchedPairsEl = document.getElementById('matched-pairs');
+        const attemptsEl = document.getElementById('attempts');
+        const statusEl = document.getElementById('status');
+        const resetBtn = document.getElementById('reset-btn');
+        const replayBtn = document.getElementById('replay-btn');
+        const completionMessage = document.getElementById('completion-message');
+        const starsContainer = document.getElementById('stars');
+        
+        // 初始化游戏
+        function initGame() {
+            gameBoard.innerHTML = '';
+            storyContent.innerHTML = '<p>匹配记忆碎片以解锁故事...</p>';
+            gameState = {
+                flippedCards: [],
+                matchedPairs: new Set(),
+                attempts: 0,
+                canFlip: true
+            };
+            
+            updateStats();
+            
+            // 创建卡片组（每对卡片有两个）
+            const cards = [];
+            memoryData.forEach((item, index) => {
+                cards.push({...item, pairId: index});
+                cards.push({...item, pairId: index});
+            });
+            
+            // 洗牌
+            shuffleArray(cards);
+            
+            // 渲染卡片
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('memory-card');
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.pairId = card.pairId;
+                
+                cardElement.innerHTML = `
+                    <div class="card-face card-front">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <div class="card-face card-back">
+                        <i class="${card.icon}"></i>
+                        <h3>${card.name}</h3>
+                    </div>
+                `;
+                
+                cardElement.addEventListener('click', flipCard);
+                gameBoard.appendChild(cardElement);
+            });
+        }
+        
+        // 洗牌算法
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // 翻转卡片
+        function flipCard() {
+            if (!gameState.canFlip) return;
+            if (this.classList.contains('flipped')) return;
+            if (gameState.flippedCards.length === 2) return;
+            
+            this.classList.add('flipped');
+            gameState.flippedCards.push(this);
+            
+            if (gameState.flippedCards.length === 2) {
+                gameState.attempts++;
+                checkForMatch();
+                updateStats();
+            }
+        }
+        
+        // 检查是否匹配
+        function checkForMatch() {
+            const [card1, card2] = gameState.flippedCards;
+            const pairId1 = card1.dataset.pairId;
+            const pairId2 = card2.dataset.pairId;
+            
+            gameState.canFlip = false;
+            
+            if (pairId1 === pairId2) {
+                // 匹配成功
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                
+                const memoryId = card1.dataset.id;
+                gameState.matchedPairs.add(memoryId);
+                
+                // 显示故事
+                showStory(memoryId);
+                
+                setTimeout(() => {
+                    gameState.flippedCards = [];
+                    gameState.canFlip = true;
+                    
+                    // 检查游戏是否完成
+                    if (gameState.matchedPairs.size === memoryData.length) {
+                        showCompletionMessage();
+                    }
+                }, 1000);
+            } else {
+                // 不匹配
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    gameState.flippedCards = [];
+                    gameState.canFlip = true;
+                }, 1500);
+            }
+        }
+        
+        // 显示故事
+        function showStory(memoryId) {
+            const memory = memoryData.find(item => item.id === memoryId);
+            if (!memory) return;
+            
+            // 创建新段落元素
+            const storyParagraph = document.createElement('p');
+            storyParagraph.textContent = memory.story;
+            
+            // 添加到故事内容区域
+            if (storyContent.firstChild.textContent === '匹配记忆碎片以解锁故事...') {
+                storyContent.innerHTML = '';
+            }
+            
+            storyContent.prepend(storyParagraph);
+            
+            // 滚动到顶部
+            storyContent.scrollTop = 0;
+        }
+        
+        // 更新游戏状态显示
+        function updateStats() {
+            matchedPairsEl.textContent = `${gameState.matchedPairs.size} / ${memoryData.length}`;
+            attemptsEl.textContent = gameState.attempts;
+            
+            if (gameState.matchedPairs.size === memoryData.length) {
+                statusEl.textContent = '小朋友殿下通关啦';
+            } else {
+                statusEl.textContent = '小朋友殿下游玩中';
+            }
+        }
+        
+        // 显示完成消息
+        function showCompletionMessage() {
+            createStars();
+            setTimeout(() => {
+                completionMessage.classList.add('show');
+            }, 1000);
+        }
+        
+        // 创建星星背景
+        function createStars() {
+            starsContainer.innerHTML = '';
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // 随机位置
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                
+                // 随机大小
+                const size = Math.random() * 3 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // 随机动画
+                const duration = Math.random() * 3 + 1;
+                const delay = Math.random() * 5;
+                star.style.animation = `twinkle ${duration}s ${delay}s infinite`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+        
+        // 事件监听
+        resetBtn.addEventListener('click', initGame);
+        replayBtn.addEventListener('click', () => {
+            completionMessage.classList.remove('show');
+            setTimeout(initGame, 500);
+        });
+        
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
